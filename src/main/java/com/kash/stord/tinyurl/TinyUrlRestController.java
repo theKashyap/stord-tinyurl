@@ -1,15 +1,9 @@
 package com.kash.stord.tinyurl;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.net.URL;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javassist.NotFoundException;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.logging.log4j.LogManager;
@@ -20,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -183,19 +178,35 @@ public class TinyUrlRestController {
         return resolvedUrlMapping.getLongUrl();
     }
 
-    @GetMapping(value = "/")
-    public String root() {
+    public byte[] getFileContents(String fileName) throws IOException {
         // FIXME: Due to our hack of serving both front and back end from same micro-service, need to
         //        ensure that browser does not request anything that matches the pattern '/{shortUrl}'
         //        and call resolveAndRedirect() instead. E.g. /my.css
-        InputStream in = this.getClass().getClassLoader().getResourceAsStream("static/index/index.html");
-        return new BufferedReader(new InputStreamReader(in))
-            .lines().collect(Collectors.joining("\n"));
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("static/index/" + fileName);
+        return StreamUtils.copyToByteArray(in);
     }
 
+    @CrossOrigin
+    @GetMapping(value = "/")
+    public String root() throws IOException {
+        String ret = new String(getFileContents("index.html"));
+        logger.info("ret: {}", ret);
+        return ret;
+    }
+
+    @CrossOrigin
     @GetMapping(value = "/index.html")
-    public String index() {
-        return root();
+    public String index() throws IOException {
+        String ret = new String(getFileContents("index.html"));
+        logger.info("ret: {}", ret);
+        return ret;
     }
 
+    @CrossOrigin
+    @GetMapping(value = "/favicon.ico", produces = "image/x-icon")
+    public byte[] favicon() throws IOException {
+        byte[] ret = getFileContents("favicon.ico");
+        logger.info("return ret.length: {}", ret.length);
+        return ret;
+    }
 }
