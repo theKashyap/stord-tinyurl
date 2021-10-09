@@ -1,0 +1,25 @@
+
+server:
+  address: 0.0.0.0
+  port: 7700
+
+logging:
+  pattern:
+    console: "%d{ISO8601_OFFSET_DATE_TIME_HHMM} %X{correlation-id} %-5level %logger{1} %msg%n"
+    file: "%d{ISO8601_OFFSET_DATE_TIME_HHMM} %X{correlation-id} %-5level %logger{1} %msg%n"
+  level:
+    root: INFO
+    org.springframework: INFO
+    org.hibernate: INFO
+    org.apache.tomcat: INFO
+    org.apache.catalina: INFO
+  file:
+    name: application.log
+
+spring.jpa:
+  database-platform: com.kash.stord.tinyurl.SQLite3Dialet
+  hibernate.ddl-auto: update
+
+spring.datasource:
+  url: jdbc:sqlite:tinyurl_database.db
+  driver-class-name: org.sqlite.JDBC

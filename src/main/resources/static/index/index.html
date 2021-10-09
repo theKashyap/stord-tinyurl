@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Get Text Input Field Value in JavaScript</title>
+</head>
+<body>
+<div class="w3-padding w3-white notranslate">
+    <h2>My First JavaScript</h2>
+    <input type="text" placeholder="Type something..." id="inputUrl" />
+    <button id="clickMe">Make my URL Tiny!</button>
+    <p id="demo"></p>
+</div>
+
+<script>
+    console.log(new Date() + " loading script");
+
+    // FIXME: This should be externalized, so that same code can be deployed
+    //        to different dev/prod environments with different config.
+    const BASE_URL = "http://localhost:7700";
+
+    function uuidv4() {
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+            /[xy]/g,
+            function (c) {
+                var r = (Math.random() * 16) | 0,
+                    v = c === "x" ? r : (r & 0x3) | 0x8;
+                return v.toString(16);
+            }
+        );
+    }
+
+    async function doPostTinyUrl(longUrl) {
+        let resp = await fetch(BASE_URL + "/tinyurl", {
+            method: "POST",
+            cache: "no-cache",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Correlation-Id": uuidv4()
+            },
+            body: JSON.stringify({ longUrl: longUrl })
+        });
+        let ret = {
+            ok: resp.ok,
+            statusCode: resp.status,
+            body: await resp.json(),
+            headers: resp.headers,
+            correlationId: resp.headers.get("X-Correlation-Id")
+        };
+        console.log("JSON.stringify(ret): " + JSON.stringify(ret));
+        return ret;
+    }
+
+    async function getShortUrl() {
+        let longUrl = document.getElementById("inputUrl").value;
+        console.log("You typed: " + longUrl);
+        let postResp = await doPostTinyUrl(longUrl);
+        console.log("postResp: " + postResp);
+        console.log("JSON.stringify(postResp): " + JSON.stringify(postResp));
+        if (postResp.ok) {
+            document.getElementById("demo").innerHTML = `
+<p>
+    <a target="_blank" href=" ${BASE_URL}/${postResp.body.shortUrl}"
+                        rel="noopener noreferrer" onmouseover="window.status='${BASE_URL}/${postResp.body.shortUrl}';"
+                        onmouseout="window.status='';">
+        ${BASE_URL}/${postResp.body.shortUrl}
+     </a>
+</p>
+`;
+        } else {
+            document.getElementById("demo").innerHTML = `<a>${JSON.stringify(
+                postResp
+            )}</a>`;
+        }
+    }
+
+    var btn = document.getElementById("clickMe");
+    btn.addEventListener("click", getShortUrl);
+</script>
+</body>
+</html>
