@@ -25,11 +25,23 @@ class ModelCoverageSpec extends Specification {
         where:
         retVal | other
         true   | new UrlMapping(id: 1, longUrl: "longUrlInDB")
+        false  | null
         false  | new Object()
         false  | new UrlMapping(id: null, longUrl: "different longUrlInDB")
         false  | new UrlMapping(id: 1, longUrl: "different longUrlInDB")
         false  | new UrlMapping(id: 2, longUrl: "longUrlInDB")
         false  | new UrlMapping(id: 2, longUrl: "different longUrlInDB")
+    }
+
+    def "UrlMapping.hashcode() should work like a hashcode function"() {
+        given:
+        def thisMapping = new UrlMapping(id: 1, longUrl: "longUrlInDB")
+        def otherMapping = new UrlMapping(id: 1, longUrl: "longUrlInDB")
+        def diffMapping = new UrlMapping(id: 2, longUrl: "longUrlInDB 2")
+
+        expect:
+        thisMapping.hashCode() == otherMapping.hashCode()
+        thisMapping.hashCode() != diffMapping.hashCode()
     }
 
     @Unroll

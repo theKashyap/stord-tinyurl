@@ -17,7 +17,7 @@ logging:
     name: application.log
 
 spring.jpa:
-  database-platform: com.kash.stord.tinyurl.SQLite3Dialet
+  database-platform: com.kash.stord.tinyurl.SQLite3Dialect
   hibernate.ddl-auto: update
 
 spring.datasource:

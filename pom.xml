@@ -128,8 +128,9 @@
                         </goals>
                         <configuration>
                             <excludes>
-                                <!-- Exclude model classes (POJO's) -->
-                                <exclude>**/SQLite3Dialet.class</exclude>
+                                <!-- Exclude things we don't (need to) test -->
+                                <exclude>**/SQLite3Dialect.class</exclude>
+                                <exclude>**/TinyurlApplication.class</exclude>
                             </excludes>
                         </configuration>
                     </execution>

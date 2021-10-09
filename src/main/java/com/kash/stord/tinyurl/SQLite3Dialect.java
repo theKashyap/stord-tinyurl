@@ -8,8 +8,8 @@ import org.hibernate.dialect.function.VarArgsSQLFunction;
 import org.hibernate.type.StringType;
 
 // FIXME: Doc
-public class SQLite3Dialet extends Dialect {
-    public SQLite3Dialet() {
+public class SQLite3Dialect extends Dialect {
+    public SQLite3Dialect() {
         registerColumnType(Types.BIT, "integer");
         registerColumnType(Types.TINYINT, "tinyint");
         registerColumnType(Types.SMALLINT, "smallint");
