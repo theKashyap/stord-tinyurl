@@ -184,5 +184,4 @@ class TinyUrlRestControllerSpec extends Specification {
         // Not much we can verify here. Front end should be seperated and tested using appropriate tech.
         noExceptionThrown()
     }
-
 }

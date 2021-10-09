@@ -178,9 +178,7 @@ public class TinyUrlRestController {
             throw new NotFoundException(errMsg);
         }
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("resolved to: resolvedUrlMapping: {}", resolvedUrlMapping);
-        }
+        logger.info("resolved '{}' to: resolvedUrlMapping: '{}'", shortUrl, resolvedUrlMapping);
 
         return resolvedUrlMapping.getLongUrl();
     }
