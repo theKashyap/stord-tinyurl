@@ -68,9 +68,9 @@
 </p>
 `;
         } else {
-            document.getElementById("demo").innerHTML = `<a>${JSON.stringify(
-                postResp
-            )}</a>`;
+            document.getElementById("demo").innerHTML = `<pre><a>${JSON.stringify(
+                postResp, null, "\t"
+            )}</a></pre>`;
         }
     }
 

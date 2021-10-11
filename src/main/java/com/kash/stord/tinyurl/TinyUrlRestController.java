@@ -1,5 +1,6 @@
 package com.kash.stord.tinyurl;
 
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.metrics.annotation.Timed;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,12 +29,14 @@ import org.springframework.web.bind.annotation.RestController;
  * Entry point for incoming REST API calls for resource "/tinyUrl".
  */
 @RestController
+@Timed
 public class TinyUrlRestController {
     private static final Logger logger = LogManager.getLogger();
     public static final String X_CORRELATION_ID = "X-CORRELATION-ID";
     public static final String CORRELATION_ID = "correlation-id";
     private static final String INTERNAL_SERVER_ERROR_WITH_CORRELATION_ID =
         "An unexpected error occurred. If problem persists, please contact support with correlation id: ";
+
     private final TinyUrlRepository repository;
 
     @Autowired
@@ -57,7 +61,8 @@ public class TinyUrlRestController {
 
         } catch (NotFoundException e) {
             logger.error("No mapping found for shortUrl: '{}'", shortUrl, e);
-            return ResponseEntity.notFound().header(X_CORRELATION_ID, correlationId).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).header(X_CORRELATION_ID, correlationId)
+                .body(e.getMessage());
         } catch (Exception e) {
             logger.error("Unexpected exception handling shortUrl: '{}'", shortUrl, e);
             return ResponseEntity.internalServerError().header(X_CORRELATION_ID, correlationId).body(
@@ -100,7 +105,7 @@ public class TinyUrlRestController {
                 String errMsg = String.format("Supplied longUrl (%s) is not a valid URL according to Apache Commons" +
                     " UrlValidator. Ensure it has valid Scheme, Authority, Path, Query, Fragment.", longUrl);
                 logger.warn(errMsg);
-                return ResponseEntity.badRequest()
+                return ResponseEntity.badRequest().header(X_CORRELATION_ID, correlationId)
                     .body(body.withMessage(errMsg).witHttpStatusCode(HttpStatus.BAD_REQUEST));
             }
 
@@ -168,7 +173,10 @@ public class TinyUrlRestController {
             // FIXME: We could distinguish between a key that's not found and one that's not valid (id is -ve),
             //        but letting end user know should be considered helping them if they're trying to exploit.
             logger.warn("no mapping found for shortUrl: {}, id: {} in DB.", shortUrl, id);
-            String errMsg = String.format("No mapping found for shortUrl: '%s'. Did you create a mapping?", shortUrl);
+            String errMsg = String.format("<br/>No mapping found for shortUrl: %s. Did you <a target=\"_blank\" " +
+                "href=\"http://localhost:8080/\" rel=\"noopener noreferrer\" " +
+                "onmouseover=\"window.status='http://localhost:8080/';\" onmouseout=\"window.status='';\">" +
+                "create a mapping?</a><br/>", shortUrl);
 
             throw new NotFoundException(errMsg);
         }
@@ -209,4 +217,5 @@ public class TinyUrlRestController {
         logger.info("return ret.length: {}", ret.length);
         return ret;
     }
+
 }
