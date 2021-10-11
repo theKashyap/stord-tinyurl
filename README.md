@@ -1,3 +1,17 @@
+- [stord-tinyurl](#stord-tinyurl)
+  * [Design](#design)
+  * [Features](#features)
+  * [Explore](#explore)
+  * [Run (without building)](#run--without-building-)
+    + [REST call examples](#rest-call-examples)
+  * [Work with source](#work-with-source)
+    + [Build, test and run](#build--test-and-run)
+    + [Dockerize](#dockerize)
+  * [Prometheus and metrics](#prometheus-and-metrics)
+- [References](#references)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 # stord-tinyurl
 A sample implementation of the TinyURL problem.
 
@@ -11,20 +25,34 @@ Application consists of:
 - Prometheus server that collects and collates Metrics for visibility.
 
 ## Features
-* Provides a RESTful API
-    * to create a shorter URL from a given long URL
-    * to get back long URL given short URL
-* Input URL validation.
-* URL redirection for short URLs
-* Web UI
+* A Spring Boot micro-service that provides:
+  * a RESTful API to create a shorter URL from a given long URL & to get back long URL given that short URL.
+  * input URL validation.
+  * URL redirection for short URLs
+  * A Web UI
+* Unit tests in Spock with coverage
 * Correlation ID for every transaction for traceability.
-* Prometheus collector with GUI to explore Metrics.
-* Unit tests with coverage
+* Prometheus with GUI to explore Metrics.
+* Dockerized
+
+## Explore
+You can:
+* Run
+  * Without building [from DockerHub](#run--without-building-). Requires `docker`.
+  * [Build from source](#work-with-source), run tests and run app.
+* Invoke [REST API from shell](#rest-call-examples) using `curl`.
+* Explore code in [github](https://github.com/theKashyap/stord-tinyurl).
+* [Setup Prometheus](#prometheus-and-metrics) and see Metrics.
+* [Run unit tests](#build--test-and-run) to see coverage report.
 
 ## Run (without building)
 
+An image has been pushed to DockerHub [repo thekashyap/stord.tinyurl](https://hub.docker.com/repository/docker/thekashyap/stord.tinyurl).
+You can pull and run image without anything other than docker.
+
 ```
-docker run ???
+docker pull thekashyap/stord.tinyurl
+docker run --rm --name stord-tinyurl -p 8080:8080 thekashyap/stord.tinyurl
 ```
 
 Web UI would be accessible at http://localhost:8080
@@ -81,12 +109,12 @@ docker run --rm -d --name stord-tinyurl -p 8080:8080 kash/stord/tinyurl
 ```
 Web UI would be accessible at http://localhost:8080
 
-## See metrics
+## Prometheus and metrics
 For metrics, we
 * expose our app's metrics on `/actuator/prometheus` (so tools like Splunk, Datadog, Prometheus etc can collect metrics).
 * setup a Prometheus container, that collects metrics from our app regularly and provides a UI at `http://localhost:9090`.
 
-### Setup Prometheus
+
 ```sh
 
 # If App container is not running already, then start it
