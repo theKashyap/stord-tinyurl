@@ -11,10 +11,13 @@ import org.springframework.http.HttpStatus;
 /**
  * It is recommended to NOT use same entity classes for JPA and REST interface.
  * As JPA entities are modified by Spring/JPA outside our control.
+ * <br/>
+ * Should consider different classes for 2xx, 4xx & 5xx. Right now same one is shared.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 class UrlMappingPojo {
     private static final Logger logger = LogManager.getLogger();
+    // Could've been final, but not for Unit tests
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     UrlMappingPojo() {

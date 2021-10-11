@@ -26,7 +26,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Entry point for incoming REST API calls for resource "/tinyUrl".
+ * Entry point for incoming REST API calls for resource "/tinyUrl" and
+ * frontend at "/"
  */
 @RestController
 @Timed
@@ -44,58 +45,36 @@ public class TinyUrlRestController {
         this.repository = repo;
     }
 
-    @GetMapping(value = "/{shortUrl}")
-    public ResponseEntity<String> resolveAndRedirect(@PathVariable String shortUrl,
-                                                     @RequestHeader(value = X_CORRELATION_ID, required = false)
-                                                         String userCorrelationId) {
-        String correlationId = Strings.isNotEmpty(userCorrelationId) ? userCorrelationId : UUID.randomUUID().toString();
-        ThreadContext.put(CORRELATION_ID, correlationId);
-        try {
-            logger.info("redirectTinyurl() shortUrl: {}", shortUrl);
-            String longUrl = resolveToLongUrl(shortUrl);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setLocation(URI.create(longUrl));
-            headers.add(X_CORRELATION_ID, correlationId);
-            logger.info("redirecting to: resolvedUrl: {}", longUrl);
-            return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).headers(headers).build();
-
-        } catch (NotFoundException e) {
-            logger.error("No mapping found for shortUrl: '{}'", shortUrl, e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).header(X_CORRELATION_ID, correlationId)
-                .body(e.getMessage());
-        } catch (Exception e) {
-            logger.error("Unexpected exception handling shortUrl: '{}'", shortUrl, e);
-            return ResponseEntity.internalServerError().header(X_CORRELATION_ID, correlationId).body(
-                INTERNAL_SERVER_ERROR_WITH_CORRELATION_ID +
-                    correlationId);
-        }
-    }
-
     /**
-     * Create a new short URL from a long URL.
-     * Creates a new entry/mapping in DB (id <-> long URL).
-     * Converts the id (number) of this new mapping to alpha-numeric short URL (string) using a bijective function.
-     * Returns the short URL.
+     * Create a new short URL from a long URL.<br/>
+     * - Creates a new entry/mapping in DB (id <-> long URL).<br/>
+     * - Converts the id (number) of new mapping to alpha-numeric short URL (string) using a bijective function.<br/>
+     * - Returns the short URL.<br/>
      *
      * @param body              JSON deserialized by Spring. Only longUrl is required.
-     * @param userCorrelationId optional header, used for traceability
-     * @return A new mapping, or an error message if URL is invalid.
+     * @param userCorrelationId optional correlation id in headers for this transaction, if not provided
+     *                          a new one would be created & used. Always returned in headers.
+     * @return A new mapping if successful, 400 for bad input. 500 with error message  otherwise.
      */
     @CrossOrigin
     @PostMapping(path = "/tinyurl")
     public ResponseEntity<UrlMappingPojo> createTinyurl(@RequestBody UrlMappingPojo body,
                                                         @RequestHeader(value = X_CORRELATION_ID, required = false)
                                                             String userCorrelationId) {
-        // if user provided a correlation id in header (X-Correlation-Id: <some unique id>) then use that
-        // else generate one of our own. This is used in logging.pattern (%X{correlation-id}) in
-        // application.properties, so it gets embedded in every log message. Required to find right
-        // logs in a multi-threaded cloud environment.
+        // FIXME: if user provided a correlation id in header (X-Correlation-Id: <some unique id>) then use that
+        //        else generate one of our own. This is used in logging.pattern (%X{correlation-id}) in
+        //        application.properties, so it gets embedded in every log message. Required to find right
+        //        logs in a multi-threaded cloud environment.
         String correlationId = Strings.isNotEmpty(userCorrelationId) ? userCorrelationId : UUID.randomUUID().toString();
         ThreadContext.put(CORRELATION_ID, correlationId);
 
         // FIXME: In a boundary function like this, always provide a log at entry and all exits with as many
         //        variables/params as possible.
-        logger.info("body: {}, correlationId: {}", body, correlationId);
+        if (logger.isDebugEnabled()) {
+            // FIXME: If traffic is high, logging every call at info level can cost money for log/event processing.
+            //        Put a debug level log so we can get it if needed without deploying code with new logs.
+            logger.debug("body: {}, correlationId: {}", body, correlationId);
+        }
 
         try {
             String longUrl = body.longUrl;
@@ -128,6 +107,8 @@ public class TinyUrlRestController {
     }
 
     /**
+     * Resolves a short URL created earlier to corresponding long URL. Does NOT redirect.
+     * See {@link #resolveAndRedirect(String, String)} for more.
      * Converts the alpha-numeric short URL (string) to id (number) using a bijective function.
      * Lookup mapping for this id in DB (id <-> long URL).
      * Returns the long URL.
@@ -143,11 +124,7 @@ public class TinyUrlRestController {
                                                              String userCorrelationId) {
         String correlationId = Strings.isNotEmpty(userCorrelationId) ? userCorrelationId : UUID.randomUUID().toString();
         ThreadContext.put(CORRELATION_ID, correlationId);
-        // FIXME: If traffic is high, logging every call at info level can cost money for log/event processing.
-        //        Put a debug level log so we can get it if needed without deploying code with new logs.
-        if (logger.isDebugEnabled()) {
-            logger.debug("shortUrl: {}, correlationId: {}", shortUrl, correlationId);
-        }
+        logger.info("shortUrl: {}, correlationId: {}", shortUrl, correlationId);
         try {
             String longUrl = resolveToLongUrl(shortUrl);
             return ResponseEntity.ok().header(X_CORRELATION_ID, correlationId)
@@ -163,6 +140,40 @@ public class TinyUrlRestController {
                 new UrlMappingPojo().withMessage(
                     INTERNAL_SERVER_ERROR_WITH_CORRELATION_ID +
                         correlationId).withShortUrl(shortUrl).witHttpStatusCode(HttpStatus.INTERNAL_SERVER_ERROR));
+        }
+    }
+
+    /**
+     * Resolves given short URL and responds with 301 to redirect caller to resolved/long URL.
+     *
+     * @param shortUrl          short URL to resolve from path variables
+     * @param userCorrelationId optional correlation id in headers for this transaction
+     * @return 301 if resolved, 404 if not found. 500 with error message  otherwise.
+     */
+    @GetMapping(value = "/{shortUrl}")
+    public ResponseEntity<String> resolveAndRedirect(@PathVariable String shortUrl,
+                                                     @RequestHeader(value = X_CORRELATION_ID, required = false)
+                                                         String userCorrelationId) {
+        String correlationId = Strings.isNotEmpty(userCorrelationId) ? userCorrelationId : UUID.randomUUID().toString();
+        ThreadContext.put(CORRELATION_ID, correlationId);
+        try {
+            logger.info("redirectTinyurl() shortUrl: {}", shortUrl);
+            String longUrl = resolveToLongUrl(shortUrl);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setLocation(URI.create(longUrl));
+            headers.add(X_CORRELATION_ID, correlationId);
+            logger.info("redirecting to: resolvedUrl: {}", longUrl);
+            return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).headers(headers).build();
+
+        } catch (NotFoundException e) {
+            logger.error("No mapping found for shortUrl: '{}'", shortUrl, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).header(X_CORRELATION_ID, correlationId)
+                .body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected exception handling shortUrl: '{}'", shortUrl, e);
+            return ResponseEntity.internalServerError().header(X_CORRELATION_ID, correlationId).body(
+                INTERNAL_SERVER_ERROR_WITH_CORRELATION_ID +
+                    correlationId);
         }
     }
 
@@ -186,10 +197,14 @@ public class TinyUrlRestController {
         return resolvedUrlMapping.getLongUrl();
     }
 
+    // ------------- front-end -------------
+
     public byte[] getFileContents(String fileName) throws IOException {
         // FIXME: Due to our hack of serving both front and back end from same micro-service, need to
         //        ensure that browser does not request anything that matches the pattern '/{shortUrl}'
         //        and call resolveAndRedirect() instead. E.g. /my.css
+        //        We could've used some framework like ThemeLeaf or something, but it does the same
+        //        thing (serve file contents) under the covers.
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("static/index/" + fileName);
         return StreamUtils.copyToByteArray(in);
     }
@@ -197,24 +212,20 @@ public class TinyUrlRestController {
     @CrossOrigin
     @GetMapping(value = "/")
     public String root() throws IOException {
-        String ret = new String(getFileContents("index.html"));
-        logger.info("ret: {}", ret);
-        return ret;
+        return new String(getFileContents("index.html"));
     }
 
     @CrossOrigin
     @GetMapping(value = "/index.html")
     public String index() throws IOException {
-        String ret = new String(getFileContents("index.html"));
-        logger.info("ret: {}", ret);
-        return ret;
+        return root();
     }
 
     @CrossOrigin
     @GetMapping(value = "/favicon.ico", produces = "image/x-icon")
     public byte[] favicon() throws IOException {
         byte[] ret = getFileContents("favicon.ico");
-        logger.info("return ret.length: {}", ret.length);
+        logger.debug("return ret.length: {}", ret.length);
         return ret;
     }
 

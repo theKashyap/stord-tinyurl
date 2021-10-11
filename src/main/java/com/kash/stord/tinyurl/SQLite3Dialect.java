@@ -7,7 +7,8 @@ import org.hibernate.dialect.function.StandardSQLFunction;
 import org.hibernate.dialect.function.VarArgsSQLFunction;
 import org.hibernate.type.StringType;
 
-// FIXME: Doc
+// NOSONAR
+// Define the dialect for SQLite3 so spring-boot can talk to it
 public class SQLite3Dialect extends Dialect {
     public SQLite3Dialect() {
         registerColumnType(Types.BIT, "integer");

@@ -13,6 +13,17 @@ import spock.lang.Unroll
 class ModelCoverageSpec extends Specification {
     private static final Logger logger = LogManager.getLogger();
 
+    def "UrlMapping.hashcode() should adhere to contract of a hashcode function"() {
+        given:
+        def thisMapping = new UrlMapping(id: 1, longUrl: "longUrlInDB")
+        def otherMapping = new UrlMapping(id: 1, longUrl: "longUrlInDB")
+        def diffMapping = new UrlMapping(id: 2, longUrl: "longUrlInDB 2")
+
+        expect:
+        thisMapping.hashCode() == otherMapping.hashCode()
+        thisMapping.hashCode() != diffMapping.hashCode()
+    }
+
     @Unroll
     def "UrlMapping.equals() should return #retVal when comparing to #other"() {
         given:
@@ -31,17 +42,6 @@ class ModelCoverageSpec extends Specification {
         false  | new UrlMapping(id: 1, longUrl: "different longUrlInDB")
         false  | new UrlMapping(id: 2, longUrl: "longUrlInDB")
         false  | new UrlMapping(id: 2, longUrl: "different longUrlInDB")
-    }
-
-    def "UrlMapping.hashcode() should work like a hashcode function"() {
-        given:
-        def thisMapping = new UrlMapping(id: 1, longUrl: "longUrlInDB")
-        def otherMapping = new UrlMapping(id: 1, longUrl: "longUrlInDB")
-        def diffMapping = new UrlMapping(id: 2, longUrl: "longUrlInDB 2")
-
-        expect:
-        thisMapping.hashCode() == otherMapping.hashCode()
-        thisMapping.hashCode() != diffMapping.hashCode()
     }
 
     @Unroll

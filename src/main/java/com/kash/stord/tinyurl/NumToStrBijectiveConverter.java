@@ -3,8 +3,6 @@ package com.kash.stord.tinyurl;
 /*
  * Source: https://github.com/delight-im/ShortURL
  * Renamed and modified to support long instead of int.
- *
- * Licensed under the MIT License (https://opensource.org/licenses/MIT)
  */
 
 /**

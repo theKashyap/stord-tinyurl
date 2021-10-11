@@ -5,6 +5,9 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
+/**
+ * A simple DB Entity. Represents a mapping between a numeric id and a long URL.
+ */
 @Entity
 public class UrlMapping {
 
@@ -56,8 +59,8 @@ public class UrlMapping {
 
     @Override
     public String toString() {
-        // TODO: JSON is more parsable. Helps extract info easily from logs for
-        // post-processing, create alerts, build dashboards etc.
+        // FIXME: JSON is more parsable. Helps extract info easily from logs for
+        //        post-processing, create alerts, build dashboards etc.
         return String.format("{\"id\": \"%d\", \"originalUrl\": \"%s\"}", id, longUrl);
     }
 }

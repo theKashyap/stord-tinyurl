@@ -17,14 +17,25 @@ class TinyUrlRestControllerSpec extends Specification {
         def rc = new TinyUrlRestController(repo)
         def hardcodedId = 1234567890L
         def hardcodedShortUrl = NumToStrBijectiveConverter.numToStr(hardcodedId)
-        1 * repo.save(_) >> new UrlMapping(id: hardcodedId, longUrl: longUrl)
-        def resp = rc.createTinyurl(new UrlMappingPojo().withLongUrl(longUrl), null)
+        def myCorrelationId = UUID.randomUUID().toString()
+        def objSavedToDb = null
+        // FIXME: Verify that exactly one call is made to save the mapping to DB
+        1 * repo.save(_) >> {
+            objSavedToDb = it[0]
+            return new UrlMapping(id: hardcodedId, longUrl: longUrl)
+        }
+        def resp = rc.createTinyurl(new UrlMappingPojo().withLongUrl(longUrl), myCorrelationId)
 
         expect:
         logger.debug(resp)
+        // FIXME: Verify that correct object is saved to DB
+        objSavedToDb.longUrl == longUrl
+        // FIXME: Verify required attributes of response are always populated
         resp.getStatusCode() == HttpStatus.OK
         resp.getBody().longUrl == longUrl
         resp.getBody().shortUrl.endsWith(hardcodedShortUrl)
+        // FIXME: Verify that correct correlation id is part of response headers
+        resp.getHeaders().get(TinyUrlRestController.X_CORRELATION_ID) == [myCorrelationId]
 
         where:
         tcName             | longUrl
@@ -54,6 +65,7 @@ class TinyUrlRestControllerSpec extends Specification {
         "space"           | "http:// "
         "space2"          | "http://www.wikipedia.org/ /wiki"
         "space3"          | "http://www.wikipedia.org/wiki?q=a b"
+        "localhost"       | "http://localhost:8080"
         "invalid schema"  | "unknown:// "
         "wrong authority" | "ftp://::::@example.com"
     }
@@ -179,6 +191,8 @@ class TinyUrlRestControllerSpec extends Specification {
         when:
         def resp = new TinyUrlRestController(Mock(TinyUrlRepository)).index()
         logger.debug(resp)
+        def favicon = new TinyUrlRestController(Mock(TinyUrlRepository)).favicon()
+        logger.debug(resp.length())
 
         then:
         // Not much we can verify here. Front end should be seperated and tested using appropriate tech.

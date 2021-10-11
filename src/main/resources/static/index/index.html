@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Get Text Input Field Value in JavaScript</title>
+    <title>STORD TinyURL maker</title>
 </head>
 <body>
 <div class="w3-padding w3-white notranslate">
-    <h2>My First JavaScript</h2>
-    <input type="text" placeholder="Type something..." id="inputUrl" />
+    <h2>STORD TinyURL maker PoC</h2>
+    <input type="text" placeholder="Type long URL..." id="inputUrl" />
     <button id="clickMe">Make my URL Tiny!</button>
     <p id="demo"></p>
 </div>
@@ -68,6 +68,7 @@
 </p>
 `;
         } else {
+            alert(postResp.body.message)
             document.getElementById("demo").innerHTML = `<pre><a>${JSON.stringify(
                 postResp, null, "\t"
             )}</a></pre>`;
