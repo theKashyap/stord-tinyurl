@@ -8,6 +8,9 @@
     + [Build, test and run](#build--test-and-run)
     + [Dockerize](#dockerize)
   * [Prometheus and metrics](#prometheus-and-metrics)
+  * [CI/CD](#ci-cd)
+    + [CI](#ci)
+    + [CD](#cd)
 - [References](#references)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
@@ -23,6 +26,7 @@ Application consists of:
     - RESTful API for to create and get resource `/tinyurl`
     - Frontend WebUI at `/` (implemented using vanilla js in html)
 - Prometheus server that collects and collates Metrics for visibility.
+- Basic CI for build/test, with multiple options for CD.
 
 ## Features
 * A Spring Boot micro-service that provides:
@@ -30,10 +34,11 @@ Application consists of:
   * input URL validation.
   * URL redirection for short URLs
   * A Web UI
-* Unit tests in Spock with coverage
+* Unit tests in Spock with coverage and mutation testing of Unit tests.
 * Correlation ID for every transaction for traceability.
 * Prometheus with GUI to explore Metrics.
-* Dockerized
+* Dockerized to allow for multitude of deployment and CD options.
+* CI (build+unit-tests) based on GitHub actions.
 
 ## Explore
 You can:
@@ -44,13 +49,15 @@ You can:
 * Explore code in [github](https://github.com/theKashyap/stord-tinyurl).
 * [Setup Prometheus](#prometheus-and-metrics) and see Metrics.
 * [Run unit tests](#build--test-and-run) to see coverage report.
+* Explore [CI/CD options](#ci-cd).
+* Read through `FIXME` notes in code documenting some basic coding principles.
 
 ## Run (without building)
 
-An image has been pushed to DockerHub [repo thekashyap/stord.tinyurl](https://hub.docker.com/repository/docker/thekashyap/stord.tinyurl).
+An image has been built and pushed to DockerHub [repo thekashyap/stord.tinyurl](https://hub.docker.com/repository/docker/thekashyap/stord.tinyurl).
 You can pull and run image without anything other than docker.
 
-```
+```sh
 docker pull thekashyap/stord.tinyurl
 docker run --rm --name stord-tinyurl -p 8080:8080 thekashyap/stord.tinyurl
 ```
@@ -85,6 +92,9 @@ git clone https://github.com/theKashyap/stord-tinyurl.git
 # Run unit tests, coverage
 ./mvnw clean test && echo "Coverage report at: ./target/site/jacoco/index.html"
 
+# Run mutation tests, does not work currently (https://github.com/hcoles/pitest/issues/947)
+./mvnw -X clean compile test pitest:mutationCoverage
+
 # Run app
 ./mvnw clean -DskipTests spring-boot:run
 ```
@@ -114,6 +124,8 @@ For metrics, we
 * expose our app's metrics on `/actuator/prometheus` (so tools like Splunk, Datadog, Prometheus etc can collect metrics).
 * setup a Prometheus container, that collects metrics from our app regularly and provides a UI at `http://localhost:9090`.
 
+We obviously need the App running in a container before Prometheus can collect metrics from it.
+Can run a [pre-built image](#run--without-building-) or [build your own](#dockerize) and run.
 
 ```sh
 
@@ -131,8 +143,34 @@ Prometheus can be accessed at: http://localhost:9090
 
 Here is [an example query/graph](http://localhost:9090/graph?g0.expr=http_server_requests_seconds_count%7Buri%20!%3D%20%22%2Factuator%2Fprometheus%22%7D&g0.tab=0&g0.stacked=0&g0.show_exemplars=0&g0.range_input=1h) shows number of http calls to various end points.
 
+
+## CI/CD
+
+### CI
+Ensure incoming code is good:
+- github action automatically compiles code and runs unit tests for each PR/push.
+- Merging without PR, pushing to `main` branch or merging a PR with failed build/tests should be blocked via [branch protection settings](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule).
+  - Disabled for this PoC.
+- Can add other static checks like Sonar, BlackDuck, github security checks etc.
+
+Ensure incoming unit tests are good:
+- Mutation tests to evaluate quality of unit tests. Not working yet due to a [possible bug](https://github.com/hcoles/pitest/issues/947).
+
+Same CI can be implemented using AWS Code Suite, Jenkins, GitLab, BitBucket, Gradle etc.
+
+### CD
+- More github actions can be added to create and push Docker image after successful build/tests to a container registry like DockerHub, ACR etc.
+    * Relevant commands present [in this guide](#dockerize).
+- Yet more automation can be built, that installs ([like this](#run--without-building-)) such images to staging area and executed e2e tests, and promotes or rejects the new code based on test results.
+- Deployment options are also plenty given the app is available as a Docker image. To name a few:
+  - Kubernetes cluster, Azure AKS, Google GKE, Amazon EKS
+  - Azure Functions, App Service
+  - AWS Lambdas, Elastic Beanstalk
+  - VM farm/cluster
+
+PS: a load-balancing/deployment strategy would need to be thought of and implemented when we have many instances of this App trying to share incoming traffic.
+
 # References
 - https://spring.io/guides/gs/spring-boot-docker/
 - https://github.com/delight-im/ShortURL/blob/master/Java/ShortURL.java
 - https://www.callicoder.com/spring-boot-actuator-metrics-monitoring-dashboard-prometheus-grafana/
-

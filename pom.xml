@@ -74,10 +74,6 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
             <version>1.7.4</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>io.micrometer</groupId>-->
-<!--            <artifactId>micrometer-core</artifactId>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.metrics</groupId>
             <artifactId>spring-metrics</artifactId>
@@ -116,7 +112,7 @@
                 <executions>
                     <execution>
                         <goals>
-                            <goal>compile</goal>
+                            <goal>addTestSources</goal>
                             <goal>compileTests</goal>
                         </goals>
                     </execution>
@@ -159,6 +155,22 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- For mutation testing the unit tests -->
+            <!-- Doesn't seem to work fully: https://github.com/hcoles/pitest/issues/947 -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.7.1</version>
+                <configuration>
+                    <targetClasses>
+                        <param>com.kash.stord.tinyurl.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>com.kash.stord.tinyurl.*</param>
+                    </targetTests>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 
