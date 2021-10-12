@@ -167,6 +167,7 @@ Same CI can be implemented using AWS Code Suite, Jenkins, GitLab, BitBucket, Gra
   - Azure Functions, App Service
   - AWS Lambdas, Elastic Beanstalk
   - VM farm/cluster
+- Springboot offers multiple ways to externalize configuration, though this sample does not [create profiles](https://spring.io/blog/2020/04/23/spring-tips-configuration), it would be required for any reasonable deployment strategy to work.
 
 PS: a load-balancing/deployment/networking strategy would need to be thought of and implemented when we have many instances of this App trying to share incoming traffic.
 
