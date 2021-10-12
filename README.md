@@ -43,14 +43,14 @@ Application consists of:
 ## Explore
 You can:
 * Run
-  * Without building [from DockerHub](#run--without-building-). Requires `docker`.
-  * [Build from source](#work-with-source), run tests and run app.
+  * without building [from DockerHub](#run--without-building-). Requires `docker`.
+  * after [building from source](#work-with-source).
 * Invoke [REST API from shell](#rest-call-examples) using `curl`.
 * Explore code in [github](https://github.com/theKashyap/stord-tinyurl).
+  * Read through `FIXME` notes in code documenting some basic coding principles followed. E.g. [in TinyUrlRestController](https://github.com/theKashyap/stord-tinyurl/blob/main/src/main/java/com/kash/stord/tinyurl/TinyUrlRestController.java?highlight=FIXME#L64-L67) or search in [all files](https://github.com/theKashyap/stord-tinyurl/search?q=FIXME).
 * [Setup Prometheus](#prometheus-and-metrics) and see Metrics.
 * [Run unit tests](#build--test-and-run) to see coverage report.
 * Explore [CI/CD options](#ci-cd).
-* Read through `FIXME` notes in code documenting some basic coding principles.
 
 ## Run (without building)
 
