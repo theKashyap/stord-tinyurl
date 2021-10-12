@@ -2,13 +2,13 @@
   * [Design](#design)
   * [Features](#features)
   * [Explore](#explore)
-  * [Run (without building)](#run--without-building-)
+  * [Run without building](#run-without-building)
     + [REST call examples](#rest-call-examples)
   * [Work with source](#work-with-source)
-    + [Build, test and run](#build--test-and-run)
+    + [Build test and run](#build-test-and-run)
     + [Dockerize](#dockerize)
   * [Prometheus and metrics](#prometheus-and-metrics)
-  * [CI/CD](#ci-cd)
+  * [CI and CD](#ci-and-cd)
     + [CI](#ci)
     + [CD](#cd)
 - [References](#references)
@@ -23,8 +23,8 @@ A sample implementation of the TinyURL problem.
 
 Application consists of:
 - A spring-boot Java microservice that exposes:
-    - RESTful API for to create and get resource `/tinyurl`
-    - Frontend WebUI at `/` (implemented using vanilla js in html)
+  - RESTful API for to create and get resource `/tinyurl`
+  - Frontend WebUI at `/` (implemented using vanilla js in html)
 - Prometheus server that collects and collates Metrics for visibility.
 - Basic CI for build/test, with multiple options for CD.
 
@@ -43,16 +43,16 @@ Application consists of:
 ## Explore
 You can:
 * Run
-  * without building [from DockerHub](#run--without-building-). Requires `docker`.
+  * without building, [from DockerHub](#run-without-building). Requires `docker`.
   * after [building from source](#work-with-source).
 * Invoke [REST API from shell](#rest-call-examples) using `curl`.
 * Explore code in [github](https://github.com/theKashyap/stord-tinyurl).
   * Read through `FIXME` notes in code documenting some basic coding principles followed. E.g. [in TinyUrlRestController](https://github.com/theKashyap/stord-tinyurl/blob/main/src/main/java/com/kash/stord/tinyurl/TinyUrlRestController.java?highlight=FIXME#L64-L67) or search in [all files](https://github.com/theKashyap/stord-tinyurl/search?q=FIXME).
 * [Setup Prometheus](#prometheus-and-metrics) and see Metrics.
-* [Run unit tests](#build--test-and-run) to see coverage report.
-* Explore [CI/CD options](#ci-cd).
+* [Run unit tests](#build-test-and-run) to see coverage report.
+* Explore [CI/CD options](#ci-and-cd).
 
-## Run (without building)
+## Run without building
 
 An image has been built and pushed to DockerHub [repo thekashyap/stord.tinyurl](https://hub.docker.com/repository/docker/thekashyap/stord.tinyurl).
 You can pull and run image without anything other than docker.
@@ -79,7 +79,7 @@ curl -iX GET http://localhost:8080/2
 
 
 ## Work with source
-### Build, test and run
+### Build test and run
 ```sh
 # Clone
 git clone git@github.com:theKashyap/stord-tinyurl.git
@@ -125,7 +125,7 @@ For metrics, we
 * setup a Prometheus container, that collects metrics from our app regularly and provides a UI at `http://localhost:9090`.
 
 We obviously need the App running in a container before Prometheus can collect metrics from it.
-Can run a [pre-built image](#run--without-building-) or [build your own](#dockerize) and run.
+Can run a [pre-built image](#run-without-building) or [build your own](#dockerize) and run.
 
 ```sh
 
@@ -144,11 +144,11 @@ Prometheus can be accessed at: http://localhost:9090
 Here is [an example query/graph](http://localhost:9090/graph?g0.expr=http_server_requests_seconds_count%7Buri%20!%3D%20%22%2Factuator%2Fprometheus%22%7D&g0.tab=0&g0.stacked=0&g0.show_exemplars=0&g0.range_input=1h) shows number of http calls to various end points.
 
 
-## CI/CD
+## CI and CD
 
 ### CI
 Ensure incoming code is good:
-- github action automatically compiles code and runs unit tests for each PR/push.
+- Included [github action workflow](https://github.com/theKashyap/stord-tinyurl/tree/main/.github/workflows) automatically compiles code and runs unit tests for each PR/push.
 - Merging without PR, pushing to `main` branch or merging a PR with failed build/tests should be blocked via [branch protection settings](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule).
   - Disabled for this PoC.
 - Can add other static checks like Sonar, BlackDuck, github security checks etc.
@@ -160,15 +160,15 @@ Same CI can be implemented using AWS Code Suite, Jenkins, GitLab, BitBucket, Gra
 
 ### CD
 - More github actions can be added to create and push Docker image after successful build/tests to a container registry like DockerHub, ACR etc.
-    * Relevant commands present [in this guide](#dockerize).
-- Yet more automation can be built, that installs ([like this](#run--without-building-)) such images to staging area and executed e2e tests, and promotes or rejects the new code based on test results.
+  * Relevant commands present [in this guide](#dockerize).
+- Yet more automation can be built on top, that installs such images ([like this](#run-without-building)) to staging area and executes smoke/other-e2e tests, and promotes or rejects the new code based on test results.
 - Deployment options are also plenty given the app is available as a Docker image. To name a few:
   - Kubernetes cluster, Azure AKS, Google GKE, Amazon EKS
   - Azure Functions, App Service
   - AWS Lambdas, Elastic Beanstalk
   - VM farm/cluster
 
-PS: a load-balancing/deployment strategy would need to be thought of and implemented when we have many instances of this App trying to share incoming traffic.
+PS: a load-balancing/deployment/networking strategy would need to be thought of and implemented when we have many instances of this App trying to share incoming traffic.
 
 # References
 - https://spring.io/guides/gs/spring-boot-docker/
